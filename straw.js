@@ -2,7 +2,7 @@ const gulp = require('gulp');
 const path = require('path');
 
 const taskConfig = (name, obj) => {
-  return obj.src || obj.dest
+  return obj && (obj.src || obj.dest)
     ? Object.assign({}, obj, { name })
     : null;
 };
@@ -58,26 +58,26 @@ const createReturnObj = (mainTaskName, tasks) => {
 };
 
 module.exports = function straw(paths, registrationFunc) {
+  if (!paths) {
+    throw new Error(`No paths object provided for ${filename}`);
+  }
+
   const filename = getCallerFileName();
   const tasksObj = paths[filename];
-  if (tasksObj === undefined) {
-    throw new Error(`No configuration found for ${filename}`);
+  if (!tasksObj) {
+    return createReturnObj(filename, []);
   }
 
   const mainTask = taskConfig(filename, tasksObj);
-  if (mainTask) {
-    registerTask(mainTask, registrationFunc);
-    return createReturnObj(filename, [mainTask]);
+  const subTasks = mainTask ? [] : getSubTasks(tasksObj, filename);
+  const allTasks = mainTask ? [mainTask] : subTasks;
+  allTasks.forEach(t => registerTask(t, registrationFunc));
+
+  if (subTasks.length) {
+    // If there are subtasks we will just execute all of them
+    // when the task name is called
+    gulp.task(filename, subTasks.map(get('name')));
   }
 
-  const subTasks = getSubTasks(tasksObj, filename);
-  if (!subTasks.length) {
-    throw new Error(`No tasks or subtasks found for ${filename}`);
-  }
-
-  subTasks.forEach(t => registerTask(t, registrationFunc));
-  // If there are subtasks we will just execute all of them
-  // when the task name is called
-  gulp.task(filename, subTasks.map(get('name')));
-  return createReturnObj(filename, subTasks);
+  return createReturnObj(filename, allTasks);
 };
