@@ -1,23 +1,24 @@
 const gulp = require('gulp');
 const path = require('path');
 
-const taskConfig = (name, obj) => {
-  return obj && (obj.src || obj.dest)
-    ? Object.assign({}, obj, { name })
-    : null;
+const taskConfig = (name, obj) => Object.assign({}, obj, { name });
+
+const subTasksProps = (obj) => {
+  return obj
+    ? Object.keys(obj)
+      .filter(k => obj[k] && (obj[k].src || obj[k].dest))
+      .reduce((result, prop) => Object.assign(result, { [prop]: obj[prop] }), {})
+    : [];
 };
 
-const getSubTasks = (obj, mainTaskName) => {
-  const taskNames = Object.keys(obj);
-  const configs = taskNames.map(n => taskConfig(`${mainTaskName}:${n}`, obj[n]));
-  return configs;
-};
+const subTaskNames = (tasks, mainTaskName) => Object.keys(tasks).map(n => `${mainTaskName}:${n}`);
 
 const registerTask = (conf, func) => {
   conf && func(conf); // eslint-disable-line no-unused-expressions, max-len
 };
 
 const get = v => obj => obj[v];
+const getValues = obj => Object.keys(obj).map(k => obj[k]);
 
 const getCallerFilePath = () => {
   try {
@@ -63,21 +64,29 @@ module.exports = function straw(paths, registrationFunc) {
   }
 
   const filename = getCallerFileName();
+
   const tasksObj = paths[filename];
-  if (!tasksObj) {
-    return createReturnObj(filename, []);
+
+  const mainTasksObj = tasksObj;
+  const subTasksObj = subTasksProps(tasksObj);
+
+  const mainName = filename;
+  const subNames = subTaskNames(subTasksObj, mainName);
+
+  const mainInfo = mainTasksObj;
+  const subInfos = getValues(subTasksObj);
+
+  const mainConfig = taskConfig(mainName, mainInfo);
+  const subConfigs = subInfos.map((info, idx) => taskConfig(subNames[idx], info));
+
+  let tasks;
+  if (subConfigs.length > 0) {
+    tasks = subConfigs;
+    gulp.task(filename, subConfigs.map(get('name')));
+  } else {
+    tasks = [mainConfig];
   }
 
-  const mainTask = taskConfig(filename, tasksObj);
-  const subTasks = mainTask ? [] : getSubTasks(tasksObj, filename);
-  const allTasks = mainTask ? [mainTask] : subTasks;
-  allTasks.forEach(t => registerTask(t, registrationFunc));
-
-  if (subTasks.length) {
-    // If there are subtasks we will just execute all of them
-    // when the task name is called
-    gulp.task(filename, subTasks.map(get('name')));
-  }
-
-  return createReturnObj(filename, allTasks);
+  tasks.map(config => registerTask(config, registrationFunc));
+  return createReturnObj(filename, tasks);
 };
