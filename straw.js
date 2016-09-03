@@ -1,26 +1,44 @@
-const gulp = require('gulp');
+const requireDir = require('require-dir-all');
 const path = require('path');
+const fs = require('fs');
+const gulp = require('gulp');
 
-const taskConfig = (name, obj) => Object.assign({}, obj, { name });
-
-const subTasksProps = (obj) => {
-  return obj
-    ? Object.keys(obj)
-      .filter(k => obj[k] && (obj[k].src || obj[k].dest))
-      .reduce((result, prop) => Object.assign(result, { [prop]: obj[prop] }), {})
-    : [];
+const requireGulpfile = () => {
+  const projectRoot = process.cwd();
+  const gulpFilename = fs.readdirSync(projectRoot).find(f => /^gulpfile.js$/i.test(f));
+  return require(path.join(projectRoot, gulpFilename)); // eslint-disable-line global-require
 };
 
-const subTaskNames = (tasks, mainTaskName) => Object.keys(tasks).map(n => `${mainTaskName}:${n}`);
+const tasksPaths = (function () {
+  let paths = null;
+  let pathRequestCount = 0;
+  return {
+    set: (p) => (paths = p),
+    get: () => {
+      if (paths) { return paths; }
+      if (pathRequestCount > 0) {
+        throw new Error('Path not set in Gulpfile.');
+      }
+      requireGulpfile(); // Gulpfile should call a function to set the paths
+      pathRequestCount++;
+      if (!paths) {
+        throw new Error('Path not set in Gulpfile.');
+      } else {
+        return paths;
+      }
+    },
+  };
+}());
 
-const registerTask = (conf, func) => {
-  conf && func(conf); // eslint-disable-line no-unused-expressions, max-len
+// Impure
+// File to first require this script
+const primaryInvokingFilePath = () => {
+  return module.parent ? module.parent.filename : null;
 };
 
-const get = v => obj => obj[v];
-const getValues = obj => Object.keys(obj).map(k => obj[k]);
-
-const getCallerFilePath = () => {
+// Impure
+// File that invoked this script right now
+const invokingFilePath = () => {
   const originalFunc = Error.prepareStackTrace;
   let filename;
   try {
@@ -49,7 +67,47 @@ const getCallerFilePath = () => {
 
 const getFileName = (filePath) => path.parse(filePath).name;
 
-const getCallerFileName = () => getFileName(getCallerFilePath());
+const isFirstInvocation = () => invokingFilePath() === primaryInvokingFilePath();
+
+// Load all npm modules of a folder
+const requireFolder = (folder) => {
+  const options = { recursive: true };
+  return requireDir(folder, options);
+};
+
+function registerAll(tasksFolder, paths) {
+  tasksPaths.set(paths);
+
+  if (isFirstInvocation()) {
+    const p = invokingFilePath();
+    const invokingDir = path.parse(p).dir;
+    const tasksFolderAbsolute = path.join(invokingDir, tasksFolder);
+    // load tasks
+    requireFolder(tasksFolderAbsolute);
+  }
+}
+
+
+// Register task --------------------------------------------------------------
+const taskConfig = (name, obj) => Object.assign({}, obj, { name });
+
+const subTasksProps = (obj) => {
+  return obj
+    ? Object.keys(obj)
+      .filter(k => obj[k] && (obj[k].src || obj[k].dest))
+      .reduce((result, prop) => Object.assign(result, { [prop]: obj[prop] }), {})
+    : [];
+};
+
+const subTaskNames = (tasks, mainTaskName) => Object.keys(tasks).map(n => `${mainTaskName}:${n}`);
+
+const registerTask = (conf, func) => {
+  conf && func(conf); // eslint-disable-line no-unused-expressions, max-len
+};
+
+const get = v => obj => obj[v];
+
+const getValues = obj => Object.keys(obj).map(k => obj[k]);
 
 const makeArray = v => (Array.isArray(v) ? v : [v]);
 
@@ -57,7 +115,6 @@ const gather = (arr, prop) => arr
   .map(get(prop))
   .map(makeArray)
   .reduce((srcs, s) => srcs.concat(s), []);
-
 
 const createReturnObj = (mainTaskName, tasks) => {
   const src = gather(tasks, 'src');
@@ -67,15 +124,11 @@ const createReturnObj = (mainTaskName, tasks) => {
   return { src, dest, subTasks, name: mainTaskName };
 };
 
-module.exports = function straw(registrationFunc) {
-  const gulpfile = require(path.join(process.cwd(), 'gulpfile'));
-  if (!gulpfile) {
-    throw new Error(`No paths object provided for ${filename}`);
-  }
+function registerOne(registrationFunc) {
+  const paths = tasksPaths.get();
+  const filename = getFileName(invokingFilePath());
 
-  const filename = getCallerFileName();
-
-  const tasksObj = gulpfile[filename];
+  const tasksObj = paths[filename];
 
   const mainTasksObj = tasksObj;
   const subTasksObj = subTasksProps(tasksObj);
@@ -99,4 +152,6 @@ module.exports = function straw(registrationFunc) {
 
   tasks.map(config => registerTask(config, registrationFunc));
   return createReturnObj(filename, tasks);
-};
+}
+
+module.exports = { registerAll, registerOne };
