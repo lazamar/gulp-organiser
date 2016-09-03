@@ -21,21 +21,30 @@ const get = v => obj => obj[v];
 const getValues = obj => Object.keys(obj).map(k => obj[k]);
 
 const getCallerFilePath = () => {
+  const originalFunc = Error.prepareStackTrace;
+  let filename;
   try {
     const err = new Error();
 
     Error.prepareStackTrace = (e, stack) => stack;
-    const currentFile = err.stack.shift().getFileName();
+    const currentFile = err.stack[0].getFileName();
 
     let callerFile;
-    while (err.stack.length) {
-      callerFile = err.stack.shift().getFileName();
-      if (callerFile !== currentFile) return callerFile;
+    let needle = 0;
+    while (err.stack[needle]) {
+      callerFile = err.stack[needle].getFileName();
+      if (callerFile !== currentFile) {
+        filename = callerFile;
+        break;
+      }
+      needle++;
     }
   } catch (err) {
     throw new Error('Error getting task file name');
   }
-  return undefined;
+
+  Error.prepareStackTrace = originalFunc;
+  return filename;
 };
 
 const getFileName = (filePath) => path.parse(filePath).name;
@@ -55,17 +64,18 @@ const createReturnObj = (mainTaskName, tasks) => {
   const dest = gather(tasks, 'dest');
   const subTasks = tasks.reduce((state, t) => Object.assign({ [t.name]: t }, state), {});
 
-  return { src, dest, subTasks, task: mainTaskName };
+  return { src, dest, subTasks, name: mainTaskName };
 };
 
-module.exports = function straw(paths, registrationFunc) {
-  if (!paths) {
+module.exports = function straw(registrationFunc) {
+  const gulpfile = require(path.join(process.cwd(), 'gulpfile'));
+  if (!gulpfile) {
     throw new Error(`No paths object provided for ${filename}`);
   }
 
   const filename = getCallerFileName();
 
-  const tasksObj = paths[filename];
+  const tasksObj = gulpfile[filename];
 
   const mainTasksObj = tasksObj;
   const subTasksObj = subTasksProps(tasksObj);
