@@ -3,9 +3,19 @@ const path = require('path');
 const gulp = require('gulp');
 const requireDir = require('require-dir-all');
 
+const toArray = v => {
+  if (v === undefined || v === null) {
+    return [];
+  }
+  if (Array.isArray(v)) {
+    return v;
+  }
+  return [v];
+}
+
 const gather = (arr, prop) => arr
   .map(v => v[prop])
-  .map(v => (Array.isArray(v) ? v : [v]))
+  .map(toArray)
   .reduce((srcs, s) => srcs.concat(s), []);
 
 class Files {
@@ -49,6 +59,13 @@ class Files {
     return requireDir(folder, options);
   }
 
+  static requireFolderRelativeToInvokingFile(folder) {
+    const p = Files.invokingFilePath();
+    const invokingDir = path.parse(p).dir;
+    const tasksDirAbsolute = path.join(invokingDir, folder);
+    // load tasks
+    return Files.requireFolder(tasksDirAbsolute);
+  }
   static invokingFileName() {
     return path.parse(Files.invokingFilePath()).name;
   }
@@ -95,7 +112,9 @@ class TaskConfig {
   }
 
   static create(name, obj) {
-    return Object.assign({}, obj, { name });
+    // src is always an array
+    const src = obj ? toArray(obj.src) : null;
+    return Object.assign({}, obj, { name, src });
   }
 
   static registerTask(conf, func) {
@@ -109,22 +128,32 @@ class Straw {
     Object.preventExtensions(this);
   }
 
-  // ================ Public API =============== //
+  /**
+   * Registers the directory where gulp task registrations are
+   * and provides the paths to be used in each task.
+   * @param {String} tasksDir
+   * @param {Object} paths
+   * @return {Object} a task config object
+   */
   registerAll(tasksDir, paths) {
     // Set tasks paths
     this.paths.set(paths);
 
+    // If this method is being called when this module was loaded for the
+    // first time, then it is our Gulpfile calling and we must load
+    // all tasks. If not, then let's not load anything.
     const isFirstInvocation = Files.invokingFilePath() === Files.primaryInvokingFilePath();
     if (isFirstInvocation) {
-      const p = Files.invokingFilePath();
-      const invokingDir = path.parse(p).dir;
-      const tasksDirAbsolute = path.join(invokingDir, tasksDir);
       // load tasks
-      Files.requireFolder(tasksDirAbsolute);
+      Files.requireFolderRelativeToInvokingFile(tasksDir);
     }
   }
 
-  registerOne(registrationFunc) {
+  /**
+   * Registers a gulp task.
+   * @param {Function} registrationFunc - receives two objects as arguments: (task, allTaks)
+   */
+  register(registrationFunc) {
     const paths = this.paths.get();
     const filename = Files.invokingFileName();
     const tasksObj = paths[filename];
@@ -154,6 +183,17 @@ class Straw {
     const dest = gather(tasks, 'dest');
     const subTasks = tasks.reduce((state, t) => Object.assign({ [t.name]: t }, state), {});
     return { src, dest, subTasks, name: mainName };
+  }
+
+  /**
+   * Loads all tasks from a path into an array of task configurations
+   * @param {String} folderPath
+   * @return {Array<Object>} task configs
+   */
+  loadFrom(folderPath) {
+    const tasksObj = Files.requireFolderRelativeToInvokingFile(folderPath);
+    const tasksArray = Object.keys(tasksObj).map(k => tasksObj[k]);
+    return tasksArray;
   }
 }
 
