@@ -1,0 +1,22 @@
+{
+  "name": "gulp-organiser",
+  "version": "1.0.0",
+  "description": "``` /**  * Registers the directory where gulp task registrations are  * and provides the paths to be used in each task.  * @param {String} tasksDir  * @param {Object} paths  * @return {Object} a task config object  */ registerAll(tasksDir, paths)",
+  "main": "straw.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "lazamar",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^4.15.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "gulp",
+    "organiser",
+    "separate",
+    "files",
+    "tasks"
+  ]
+}

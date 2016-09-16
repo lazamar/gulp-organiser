@@ -1,4 +1,6 @@
 const requireDir = require('require-dir-all');
+const processPaths = require('./processPaths');
+const _ = require('lodash/fp');
 const path = require('path');
 const fs = require('fs');
 const gulp = require('gulp');
@@ -13,7 +15,7 @@ const tasksPaths = (function () {
   let paths = null;
   let pathRequestCount = 0;
   return {
-    set: (p) => (paths = p),
+    set: (p) => (paths = processPaths(p)),
     get: () => {
       if (paths) { return paths; }
       if (pathRequestCount > 0) {
@@ -89,33 +91,21 @@ function registerAll(tasksFolder, paths) {
 
 
 // Register task --------------------------------------------------------------
-const taskConfig = (name, obj) => Object.assign({}, obj, { name });
-
-const subTasksProps = (obj) => {
-  return obj
-    ? Object.keys(obj)
-      .filter(k => obj[k] && (obj[k].src || obj[k].dest))
-      .reduce((result, prop) => Object.assign(result, { [prop]: obj[prop] }), {})
-    : [];
-};
-
-const subTaskNames = (tasks, mainTaskName) => Object.keys(tasks).map(n => `${mainTaskName}:${n}`);
-
+// registerTask :: Object -> function -> void
 const registerTask = (conf, func) => {
   conf && func(conf); // eslint-disable-line no-unused-expressions, max-len
 };
 
-const get = v => obj => obj[v];
-
-const getValues = obj => Object.keys(obj).map(k => obj[k]);
-
+// makeArray :: a -> [b]
 const makeArray = v => (Array.isArray(v) ? v : [v]);
 
+// gather :: [Object] -> String -> [a]
 const gather = (arr, prop) => arr
-  .map(get(prop))
+  .map(_.get(prop))
   .map(makeArray)
   .reduce((srcs, s) => srcs.concat(s), []);
 
+// createReturnObj :: String -> [Object] -> Object
 const createReturnObj = (mainTaskName, tasks) => {
   const src = gather(tasks, 'src');
   const dest = gather(tasks, 'dest');
@@ -124,34 +114,26 @@ const createReturnObj = (mainTaskName, tasks) => {
   return { src, dest, subTasks, name: mainTaskName };
 };
 
+// Whether the array contains subtasks or just one main task.
+// isJustMaintask :: String -> [Object] -> Boolean
+const isJustMainTask = _.curry((mainTaskName, tasks) => {
+  return tasks.length === 1 && tasks[0].name === mainTaskName;
+});
+
+// Registers the function for one main task and its subTasks
+// Returns an object describing the function
+// registerOne :: Function -> Object
 function registerOne(registrationFunc) {
   const paths = tasksPaths.get();
-  const filename = getFileName(invokingFilePath());
+  const taskName = getFileName(invokingFilePath());
+  const tasks = paths[taskName];
 
-  const tasksObj = paths[filename];
-
-  const mainTasksObj = tasksObj;
-  const subTasksObj = subTasksProps(tasksObj);
-
-  const mainName = filename;
-  const subNames = subTaskNames(subTasksObj, mainName);
-
-  const mainInfo = mainTasksObj;
-  const subInfos = getValues(subTasksObj);
-
-  const mainConfig = taskConfig(mainName, mainInfo);
-  const subConfigs = subInfos.map((info, idx) => taskConfig(subNames[idx], info));
-
-  let tasks;
-  if (subConfigs.length > 0) {
-    tasks = subConfigs;
-    gulp.task(filename, subConfigs.map(get('name')));
-  } else {
-    tasks = [mainConfig];
+  if (!isJustMainTask(taskName, tasks)) {
+    gulp.task(taskName, tasks.map(_.get('name')));
   }
 
   tasks.map(config => registerTask(config, registrationFunc));
-  return createReturnObj(filename, tasks);
+  return createReturnObj(taskName, tasks);
 }
 
 module.exports = { registerAll, registerOne };
