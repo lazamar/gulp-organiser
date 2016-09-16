@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Gulp-organiser by lazamar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Gulp-organiser</h1>
+      <h2 class="project-tagline">A module to organise your gulp tasks</h2>
+      <a href="https://github.com/lazamar/gulp-organiser" class="btn">View on GitHub</a>
+      <a href="https://github.com/lazamar/gulp-organiser/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/lazamar/gulp-organiser/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h2>
+<a id="api" class="anchor" href="#api" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>API</h2>
+
+<h3>
+<a id="gulpfile-functions" class="anchor" href="#gulpfile-functions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Gulpfile functions</h3>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-c">/**</span>
+<span class="pl-c"> * Registers the directory where gulp task registrations are</span>
+<span class="pl-c"> * and provides the paths to be used in each task.</span>
+<span class="pl-c"> * <span class="pl-k">@param</span> <span class="pl-en">{String}</span> <span class="pl-smi">tasksDir</span></span>
+<span class="pl-c"> * <span class="pl-k">@param</span> <span class="pl-en">{Object}</span> <span class="pl-smi">paths</span></span>
+<span class="pl-c"> * <span class="pl-k">@return</span> <span class="pl-en">{Object}</span> a task config object</span>
+<span class="pl-c"> */</span>
+<span class="pl-en">registerAll</span>(tasksDir, paths)</pre></div>
+
+<h3>
+<a id="tasks-functions" class="anchor" href="#tasks-functions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Tasks functions</h3>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-c">/**</span>
+<span class="pl-c"> * Registers a gulp task. To be called in task file</span>
+<span class="pl-c"> * <span class="pl-k">@param</span> <span class="pl-en">{Function}</span> <span class="pl-smi">registrationFunc</span> - receives two objects as arguments: (task, allTaks)</span>
+<span class="pl-c"> */</span>
+<span class="pl-en">register</span>(registrationFunc)
+
+
+<span class="pl-c">/**</span>
+<span class="pl-c"> * Tasks like `watch` or `build` may want to require other tasks.</span>
+<span class="pl-c"> * Loads all tasks from a path into an array of task configurations</span>
+<span class="pl-c"> * <span class="pl-k">@param</span> <span class="pl-en">{String}</span> <span class="pl-smi">folderPath</span></span>
+<span class="pl-c"> * <span class="pl-k">@return</span> <span class="pl-en">{Array&lt;Object&gt;}</span> task configs</span>
+<span class="pl-c"> */</span>
+<span class="pl-en">loadFrom</span>(folderPath)</pre></div>
+
+<h2>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example</h2>
+
+<h3>
+<a id="gulpfile" class="anchor" href="#gulpfile" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Gulpfile</h3>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-c">// List all available tasks</span>
+<span class="pl-k">const</span> <span class="pl-c1">organiser</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>gulp-organiser<span class="pl-pds">'</span></span>);
+<span class="pl-c">// Paths are relative to project root.</span>
+<span class="pl-k">const</span> <span class="pl-c1">rootSrc</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>./example/example-resources/src<span class="pl-pds">'</span></span>;
+<span class="pl-k">const</span> <span class="pl-c1">rootDest</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>./example/example-resources/dest<span class="pl-pds">'</span></span>;
+<span class="pl-c">// Tasks folder is relative to gulpfile.</span>
+<span class="pl-k">const</span> <span class="pl-c1">tasksFolder</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>./tasks<span class="pl-pds">'</span></span>;
+
+<span class="pl-smi">organiser</span>.<span class="pl-en">registerAll</span>(tasksFolder, {
+  <span class="pl-c">// Each object is key is a task.</span>
+  <span class="pl-c">// Each task must have either an  'src' or a 'dest' key</span>
+  <span class="pl-s"><span class="pl-pds">'</span>sass<span class="pl-pds">'</span></span><span class="pl-k">:</span> {
+    <span class="pl-c">// Tasks may have subtasks. Just add keys with an 'src' or 'dest' property.</span>
+    <span class="pl-c">// If a task has subtasks, it is executed by 'gulp maintask:subtask'</span>
+    <span class="pl-c">// or just 'gulp maintask', which executes all subtasks.</span>
+    <span class="pl-s"><span class="pl-pds">'</span>main<span class="pl-pds">'</span></span><span class="pl-k">:</span> {
+      <span class="pl-s"><span class="pl-pds">'</span>src<span class="pl-pds">'</span></span><span class="pl-k">:</span> rootSrc <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>/sass/main.scss<span class="pl-pds">'</span></span>,
+      <span class="pl-s"><span class="pl-pds">'</span>dest<span class="pl-pds">'</span></span><span class="pl-k">:</span> rootDest <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>/sass<span class="pl-pds">'</span></span>,
+    },
+    <span class="pl-s"><span class="pl-pds">'</span>secondary<span class="pl-pds">'</span></span><span class="pl-k">:</span> {
+      <span class="pl-s"><span class="pl-pds">'</span>src<span class="pl-pds">'</span></span><span class="pl-k">:</span> rootSrc <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>/sass/secondary.scss<span class="pl-pds">'</span></span>,
+      <span class="pl-s"><span class="pl-pds">'</span>dest<span class="pl-pds">'</span></span><span class="pl-k">:</span> rootDest <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>/sass<span class="pl-pds">'</span></span>,
+    }
+    },
+    <span class="pl-s"><span class="pl-pds">'</span>copy-static<span class="pl-pds">'</span></span><span class="pl-k">:</span> {
+        <span class="pl-s"><span class="pl-pds">'</span>src<span class="pl-pds">'</span></span><span class="pl-k">:</span>  rootSrc <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>/static/**<span class="pl-pds">'</span></span>,
+        <span class="pl-s"><span class="pl-pds">'</span>dest<span class="pl-pds">'</span></span><span class="pl-k">:</span> rootDest <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>/static/<span class="pl-pds">'</span></span>,
+
+    <span class="pl-c">// Tasks may have arbitrary keys which will be passed to the task</span>
+        <span class="pl-s"><span class="pl-pds">'</span>map<span class="pl-pds">'</span></span><span class="pl-k">:</span> {
+             <span class="pl-s"><span class="pl-pds">'</span>/example-resources/src/js/**.json<span class="pl-pds">'</span></span><span class="pl-k">:</span> rootDest <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>js<span class="pl-pds">'</span></span>
+        }
+    },
+  <span class="pl-c">// Tasks may ommit either 'src' or 'dest'.</span>
+    <span class="pl-s"><span class="pl-pds">'</span>link-dependencies<span class="pl-pds">'</span></span><span class="pl-k">:</span> {
+        <span class="pl-s"><span class="pl-pds">'</span>dest<span class="pl-pds">'</span></span><span class="pl-k">:</span> rootDest <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>/dependencies<span class="pl-pds">'</span></span>,
+    }
+});</pre></div>
+
+<h3>
+<a id="task" class="anchor" href="#task" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Task</h3>
+
+<h4>
+<a id="sass" class="anchor" href="#sass" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>SASS</h4>
+
+<p>This is how a sass task could look like:</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-k">const</span> <span class="pl-c1">gulp</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>gulp<span class="pl-pds">'</span></span>);
+<span class="pl-k">const</span> <span class="pl-c1">sass</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>gulp-sass<span class="pl-pds">'</span></span>);
+<span class="pl-k">const</span> <span class="pl-c1">postcss</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>gulp-postcss<span class="pl-pds">'</span></span>);
+<span class="pl-k">const</span> <span class="pl-c1">autoprefixer</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>autoprefixer<span class="pl-pds">'</span></span>);
+<span class="pl-k">const</span> <span class="pl-c1">sourcemaps</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>gulp-sourcemaps<span class="pl-pds">'</span></span>);
+<span class="pl-k">const</span> <span class="pl-c1">organiser</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>gulp-organiser<span class="pl-pds">'</span></span>);
+
+<span class="pl-c">// Register the task. The task name is equal to its file name.</span>
+<span class="pl-c">// You must export the call to the `register` function just like here.</span>
+<span class="pl-c1">module</span>.<span class="pl-smi">exports</span> <span class="pl-k">=</span> <span class="pl-smi">organiser</span>.<span class="pl-en">register</span>((<span class="pl-smi">task</span>) <span class="pl-k">=&gt;</span> {
+  <span class="pl-smi">gulp</span>.<span class="pl-en">task</span>(<span class="pl-smi">task</span>.<span class="pl-c1">name</span>, () <span class="pl-k">=&gt;</span> {
+    <span class="pl-smi">gulp</span>.<span class="pl-en">src</span>(<span class="pl-smi">task</span>.<span class="pl-smi">src</span>) <span class="pl-c">// The content of the 'src' key was set in the Gulpfile.</span>
+    .<span class="pl-en">pipe</span>(<span class="pl-smi">sourcemaps</span>.<span class="pl-en">init</span>())
+    .<span class="pl-en">pipe</span>(<span class="pl-en">sass</span>().<span class="pl-en">on</span>(<span class="pl-s"><span class="pl-pds">'</span>error<span class="pl-pds">'</span></span>, <span class="pl-smi">sass</span>.<span class="pl-smi">logError</span>))
+    .<span class="pl-en">pipe</span>(<span class="pl-en">postcss</span>([<span class="pl-en">autoprefixer</span>({ browsers<span class="pl-k">:</span> [<span class="pl-s"><span class="pl-pds">'</span>last 15 versions<span class="pl-pds">'</span></span>] })]))
+    .<span class="pl-en">pipe</span>(<span class="pl-smi">sourcemaps</span>.<span class="pl-c1">write</span>(<span class="pl-s"><span class="pl-pds">'</span>.<span class="pl-pds">'</span></span>))
+    .<span class="pl-en">pipe</span>(<span class="pl-smi">gulp</span>.<span class="pl-en">dest</span>(<span class="pl-smi">task</span>.<span class="pl-smi">dest</span>)); <span class="pl-c">// And so was the content of 'dest'</span>
+  });
+});</pre></div>
+
+<h4>
+<a id="watch" class="anchor" href="#watch" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Watch</h4>
+
+<p>You can use <code>loadFrom</code> to include your watch tasks, so that you don't have
+to name them, and thus can just add and remove files without hastle.</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-k">const</span> <span class="pl-c1">gulp</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>gulp<span class="pl-pds">'</span></span>);
+<span class="pl-k">const</span> <span class="pl-c1">organiser</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>gulp-organiser<span class="pl-pds">'</span></span>);
+
+<span class="pl-c1">module</span>.<span class="pl-smi">exports</span> <span class="pl-k">=</span> <span class="pl-smi">organiser</span>.<span class="pl-en">register</span>((<span class="pl-smi">task</span>) <span class="pl-k">=&gt;</span> {
+  <span class="pl-k">const</span> <span class="pl-c1">watchTasks</span> <span class="pl-k">=</span> <span class="pl-smi">organiser</span>.<span class="pl-en">loadFrom</span>(<span class="pl-s"><span class="pl-pds">`</span>./<span class="pl-s1"><span class="pl-pse">${</span><span class="pl-smi">task</span>.<span class="pl-c1">name</span><span class="pl-pse">}</span></span><span class="pl-pds">`</span></span>);
+  <span class="pl-k">const</span> <span class="pl-c1">watchTaskNames</span> <span class="pl-k">=</span> <span class="pl-smi">watchTasks</span>.<span class="pl-en">map</span>(<span class="pl-smi">t</span> <span class="pl-k">=&gt;</span> <span class="pl-smi">t</span>.<span class="pl-c1">name</span>);
+  <span class="pl-smi">gulp</span>.<span class="pl-en">task</span>(<span class="pl-smi">task</span>.<span class="pl-c1">name</span>, watchTaskNames);
+});</pre></div>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
+
+<p>The MIT License (MIT)</p>
+
+<p>Copyright (c) 2016 Marcelo Lazaroni - Lazamar</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/lazamar/gulp-organiser">Gulp-organiser</a> is maintained by <a href="https://github.com/lazamar">lazamar</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
