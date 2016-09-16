@@ -1,5 +1,6 @@
-# API
-```
+## API
+### Gulpfile functions
+``` javascript
 /**
  * Registers the directory where gulp task registrations are
  * and provides the paths to be used in each task.
@@ -8,8 +9,10 @@
  * @return {Object} a task config object
  */
 registerAll(tasksDir, paths)
+```
 
-
+### Tasks functions
+``` javascript
 /**
  * Registers a gulp task. To be called in task file
  * @param {Function} registrationFunc - receives two objects as arguments: (task, allTaks)
@@ -33,7 +36,7 @@ They look as follows:
 
 ## Example
 ### Gulpfile
-```
+``` javascript
 // List all available tasks
 const organiser = require('gulp-organiser');
 // Paths are relative to project root.
@@ -78,7 +81,7 @@ organiser.registerAll(tasksFolder, {
 #### SASS
 This is how a sass task could look like:
 
-```
+``` javascript
 const gulp = require('gulp');
 const sass = require('gulp-sass');
 const postcss = require('gulp-postcss');
@@ -103,7 +106,7 @@ module.exports = organiser.register((task) => {
 You can use `loadFrom` to include your watch tasks, so that you don't have
 to name them, and thus can just add and remove files without hastle.
 
-```
+``` javascript
 const gulp = require('gulp');
 const organiser = require('gulp-organiser');
 
