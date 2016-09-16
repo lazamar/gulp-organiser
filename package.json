@@ -1,6 +1,6 @@
 {
   "name": "gulp-organiser",
-  "version": "1.0.04",
+  "version": "1.0.05",
   "description": "Super simple way to organise your tasks in files.",
   "main": "index.js",
   "scripts": {
