@@ -1,6 +1,6 @@
 {
   "name": "gulp-organiser",
-  "version": "1.0.0",
+  "version": "1.0.01",
   "description": "``` /**  * Registers the directory where gulp task registrations are  * and provides the paths to be used in each task.  * @param {String} tasksDir  * @param {Object} paths  * @return {Object} a task config object  */ registerAll(tasksDir, paths)",
   "main": "index.js",
   "scripts": {
