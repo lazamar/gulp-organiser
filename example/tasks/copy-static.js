@@ -1,8 +1,8 @@
 const gulp = require('gulp');
-const straw = require('./straw');
+const organiser = require('gulp-organiser');
 const { map, reduce, get, uniqBy, flow, filter } = require('lodash/fp');
 
-module.exports = straw.register((task, allTasks) => {
+module.exports = organiser.register((task, allTasks) => {
   // All paths with an src
   const excludePaths = getExcludedPaths(task, allTasks);
   const folderMapping = task.map;

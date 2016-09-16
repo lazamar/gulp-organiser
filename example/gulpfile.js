@@ -1,30 +1,41 @@
+require('../index.js'); // Just ignore this line.
+
+
 // List all available tasks
-const straw = require('./tasks/straw');
-straw.registerAll('./tasks', {
-	'src': [
-		'./models/**/*.js',
-		'./routes/**/*.js',
-		'keystone.js',
-		'package.json'
-	],
-	'sass': {
-		'src': './public_src/styles/**/*.scss',
-		'dest': './public/styles/'
+const organiser = require('gulp-organiser');
+// Paths are relative to project root.
+const rootSrc = './example/example-resources/src';
+const rootDest = './example/example-resources/dest';
+// Tasks folder is relative to gulpfile.
+const tasksFolder = './tasks';
+
+organiser.registerAll(tasksFolder, {
+  // Each object is key is a task.
+  // Each task must have either an  'src' or a 'dest' key
+  'sass': {
+    // Tasks may have subtasks. Just add keys with an 'src' or 'dest' property.
+    // If a task has subtasks, it is executed by 'gulp maintask:subtask'
+    // or just 'gulp maintask', which executes all subtasks.
+    'main': {
+      'src': rootSrc + '/sass/main.scss',
+      'dest': rootDest + '/sass',
+    },
+    'secondary': {
+      'src': rootSrc + '/sass/secondary.scss',
+      'dest': rootDest + '/sass',
+    }
 	},
 	'copy-static': {
-		'src': './public_src/**/*',
-		'dest': './public',
+		'src':  rootSrc + '/static/**',
+		'dest': rootDest + '/static/',
+
+    // Tasks may have arbitrary keys which will be passed to the task
 		'map': {
-			'./public_src/js_static/**/*': 'public/js'
+			 '/example-resources/src/js/**.json': rootDest + 'js'
 		}
 	},
-	'transpile-react': {
-		'watch': './public_src/js_es6/**/*.js',
-		'src': './public_src/js_es6/*.js',
-		'dest': './public/js',
-    'extenalDependencies': ['react', 'react-dom', 'lodash/fp', 'handlebars'],
-	},
+  // Tasks may ommit either 'src' or 'dest'.
 	'link-dependencies': {
-		'dest': './public/js'
+		'dest': rootDest + '/dependencies',
 	}
 });

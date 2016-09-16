@@ -80,7 +80,9 @@ const requireFolder = (folder) => {
 function registerAll(tasksFolder, paths) {
   tasksPaths.set(paths);
 
+  console.log('First invocationtest');
   if (isFirstInvocation()) {
+    console.log('First invocationtest PASSED');
     const p = invokingFilePath();
     const invokingDir = path.parse(p).dir;
     const tasksFolderAbsolute = path.join(invokingDir, tasksFolder);

@@ -3,9 +3,9 @@ const sass = require('gulp-sass');
 const postcss = require('gulp-postcss');
 const autoprefixer = require('autoprefixer');
 const sourcemaps = require('gulp-sourcemaps');
-const straw = require('./straw');
+const organiser = require('gulp-organiser');
 
-module.exports = straw.register((task) => {
+module.exports = organiser.register((task) => {
   gulp.task(task.name, () => {
     gulp.src(task.src)
     .pipe(sourcemaps.init())

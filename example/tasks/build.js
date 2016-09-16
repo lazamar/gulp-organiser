@@ -1,13 +1,12 @@
 /* eslint-disable global-require */
 const gulp = require('gulp');
-const straw = require('./straw');
+const organiser = require('gulp-organiser');
 const tasks = [
   require('./copy-static'),
   require('./sass'),
-  require('./transpile-react'),
   require('./link-dependencies'),
 ].map(t => t.name);
 
-module.exports = straw.register((task) => {
+module.exports = organiser.register((task) => {
   gulp.task(task.name, tasks);
 });

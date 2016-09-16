@@ -1,10 +1,11 @@
 {
   "name": "gulp-organiser",
-  "version": "1.0.01",
-  "description": "``` /**  * Registers the directory where gulp task registrations are  * and provides the paths to be used in each task.  * @param {String} tasksDir  * @param {Object} paths  * @return {Object} a task config object  */ registerAll(tasksDir, paths)",
+  "version": "1.0.02",
+  "description": "Super simple way to organise your tasks in files.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "require-self"
   },
   "author": "lazamar",
   "license": "ISC",
@@ -13,7 +14,15 @@
     "lodash": "^4.15.0",
     "require-dir-all": "^0.4.9"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "autoprefixer": "^6.4.1",
+    "dep-linker": "^1.0.24",
+    "gulp-postcss": "^6.2.0",
+    "gulp-sass": "^2.3.2",
+    "gulp-sourcemaps": "^1.6.0",
+    "lodash": "^4.15.0",
+    "require-self": "^0.1.0"
+  },
   "keywords": [
     "gulp",
     "organiser",
