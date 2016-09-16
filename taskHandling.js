@@ -36,18 +36,18 @@ const toArray = v => {
 };
 
 // generateConfig :: String -> Object -> Object
-const generateConfig = mainTaskName => obj => {
+const generateConfig = _.curry((mainTaskName, obj) => {
   const name = mainTaskName ? `${mainTaskName}:${obj.name}` : obj.name;
   const src = toArray(obj.src).filter(_.isString);
   return Object.assign({}, obj, { name, src });
-};
+});
 
-// createTaskConfig :: Object -> [Object]
-const createMainTaskConfig = obj => {
+// createArrayOfTasks :: Object -> [Object]
+const createArrayOfTasks = obj => {
   const mainTaskName = obj.name;
 
   if (isTask(obj)) {
-    const mainTask = generateConfig()(obj);
+    const mainTask = generateConfig(null, obj);
     return [mainTask];
   }
 
@@ -61,9 +61,34 @@ const createMainTaskConfig = obj => {
   return subTasks;
 };
 
-// toTaskConfigs :: Object<Object> -> Object<Array>
-const toTaskConfigs = _.flow(toPossibleTasks, _.mapValues(createMainTaskConfig));
+// gather :: [Object] -> String -> [a]
+const gather = (arr, prop) => arr
+  .map(_.get(prop))
+  .map(toArray)
+  .reduce((srcs, s) => srcs.concat(s), []);
 
-module.exports = function processPaths(paths) {
-  return toTaskConfigs(paths);
-};
+// createEmptyTask :: String -> Object;
+const createEmptyTask = name => generateConfig(null, { name });
+
+// createTask :: String -> [Object] -> Object
+const createTask = _.curry((mainTaskName, tasksArr) => {
+  // There must be at least one task, otherwise we create an empty one.
+  const tasks = tasksArr.length > 0 ? tasksArr : [createEmptyTask(mainTaskName)];
+
+  const src = gather(tasks, 'src');
+  const dest = gather(tasks, 'dest');
+  return { src, dest, tasks, name: mainTaskName };
+});
+
+// toTasks :: Object<Object> -> Object<Array>
+const toTasks = _.flow(
+  toPossibleTasks,
+  _.mapValues(createArrayOfTasks),
+  mapKeys(createTask)
+);
+
+function processPaths(paths) {
+  return toTasks(paths);
+}
+
+module.exports = { processPaths, createTask };

@@ -1,5 +1,5 @@
 const requireDir = require('require-dir-all');
-const processPaths = require('./processPaths');
+const { processPaths, createTask } = require('./taskHandling');
 const _ = require('lodash/fp');
 const path = require('path');
 const fs = require('fs');
@@ -92,27 +92,9 @@ function registerAll(tasksFolder, paths) {
 
 // Register task --------------------------------------------------------------
 // registerTask :: Object -> function -> void
-const registerTask = (conf, func) => {
-  conf && func(conf); // eslint-disable-line no-unused-expressions, max-len
-};
-
-// makeArray :: a -> [b]
-const makeArray = v => (Array.isArray(v) ? v : [v]);
-
-// gather :: [Object] -> String -> [a]
-const gather = (arr, prop) => arr
-  .map(_.get(prop))
-  .map(makeArray)
-  .reduce((srcs, s) => srcs.concat(s), []);
-
-// createReturnObj :: String -> [Object] -> Object
-const createReturnObj = (mainTaskName, tasks) => {
-  const src = gather(tasks, 'src');
-  const dest = gather(tasks, 'dest');
-  const subTasks = tasks.reduce((state, t) => Object.assign({ [t.name]: t }, state), {});
-
-  return { src, dest, subTasks, name: mainTaskName };
-};
+const registerTask = _.curry((paths, func, conf) => {
+  conf && func(conf, paths); // eslint-disable-line no-unused-expressions, max-len
+});
 
 // Whether the array contains subtasks or just one main task.
 // isJustMaintask :: String -> [Object] -> Boolean
@@ -122,18 +104,40 @@ const isJustMainTask = _.curry((mainTaskName, tasks) => {
 
 // Registers the function for one main task and its subTasks
 // Returns an object describing the function
-// registerOne :: Function -> Object
-function registerOne(registrationFunc) {
+// register :: Function -> Object
+function register(registrationFunc) {
   const paths = tasksPaths.get();
   const taskName = getFileName(invokingFilePath());
-  const tasks = paths[taskName];
 
-  if (!isJustMainTask(taskName, tasks)) {
-    gulp.task(taskName, tasks.map(_.get('name')));
+  // We do allow empty tasks
+  const task = paths[taskName] || createTask(taskName, []);
+
+  if (!isJustMainTask(taskName, task.tasks)) {
+    gulp.task(taskName, task.tasks.map(_.get('name')));
   }
 
-  tasks.map(config => registerTask(config, registrationFunc));
-  return createReturnObj(taskName, tasks);
+  // Put tasks in an array
+  const allTasks = _.values(paths);
+  task.tasks.map(registerTask(allTasks, registrationFunc));
+  return task;
 }
 
-module.exports = { registerAll, registerOne };
+// -----------------------------------------------------------------------------
+
+const getDirectory = p => path.parse(p).dir;
+
+const requireFolderRelativeToInvokingFile = folder => {
+  const p = invokingFilePath();
+  const invokingDir = getDirectory(p);
+  const tasksDirAbsolute = path.join(invokingDir, folder);
+  // load tasks
+  return requireFolder(tasksDirAbsolute);
+};
+
+function loadFrom(folderPath) {
+  const tasksObj = requireFolderRelativeToInvokingFile(folderPath);
+  const tasksArray = _.values(tasksObj);
+  return tasksArray;
+}
+
+module.exports = { registerAll, register, loadFrom };
