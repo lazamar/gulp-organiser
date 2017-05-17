@@ -15,7 +15,9 @@
   "license": "ISC",
   "dependencies": {
     "gulp": "^3.9.1",
+    "gulp-shell": "^0.6.3",
     "lodash": "^4.15.0",
+    "ramda-fantasy": "^0.8.0",
     "require-dir-all": "^0.4.9"
   },
   "devDependencies": {
@@ -34,5 +36,5 @@
     "files",
     "tasks"
   ],
-   "homepage": "https://github.com/lazamar/gulp-organiser"
+  "homepage": "https://github.com/lazamar/gulp-organiser"
 }
